@@ -1,0 +1,41 @@
+# Virtual environment
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# VS Code settings
+.vscode/
+
+# Bytecode
+*.pyc
+*.pyo
+*.pyd
+*.pyd
+
+# Logs
+*.log
+
+# macOS system files
+.DS_Store
+
+# JetBrains IDEs
+.idea/
+
+# Local config or secrets
+*.pem
+*.key
+firebase-key.json
+serviceAccount.json
+
+# Build artifacts
+dist/
+build/
