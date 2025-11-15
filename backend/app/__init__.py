@@ -8,7 +8,7 @@ def create_app():
     CORS(app)
 
     app.config['SECRET_KEY'] = config.SECRET_KEY
-    app.config["MONGO_URI"] = config.MONGO_URI
+    app.config['MONGO_URI'] = config.MONGO_URI
 
     mongo.init_app(app)
 
