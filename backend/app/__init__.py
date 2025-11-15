@@ -11,6 +11,7 @@ def create_app():
     app.config['MONGO_URI'] = config.MONGO_URI
 
     mongo.init_app(app)
+    CORS(app, supports_credentials=True)
 
     from .routes.books import books_bp
     app.register_blueprint(books_bp, url_prefix="/api/books")
