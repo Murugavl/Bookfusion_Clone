@@ -32,3 +32,9 @@ def upload_book():
     })
 
     return jsonify({"message": "Uploaded", "file_url": file_url})
+
+
+@books_bp.route("/all", methods=["GET"])
+def get_all_books():
+    books = list(mongo.db.books.find({}, {"_id": 0}))
+    return jsonify(books)

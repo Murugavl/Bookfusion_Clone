@@ -1,5 +1,5 @@
-import UploadBook from "./pages/UploadBook";
+import BookList from "./pages/BookList";
 
 export default function App() {
-  return <UploadBook />;
+  return <BookList />;
 }
