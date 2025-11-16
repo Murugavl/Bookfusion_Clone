@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 export default function BookList() {
   const [books, setBooks] = useState([]);
@@ -24,9 +25,12 @@ export default function BookList() {
             borderRadius: 10,
             padding: 15
           }}>
-            <h3>{book.title}</h3>
-            <a
-              href={book.file_url}
+            <Link to={`/book/${index}`} style={{ textDecoration: "none" }}>
+              <h3>{book.title}</h3>
+            </Link>
+
+            <a 
+              href={book.file_url} 
               target="_blank"
               rel="noopener noreferrer"
             >
