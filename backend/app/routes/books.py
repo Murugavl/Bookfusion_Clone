@@ -16,7 +16,7 @@ def get_books():
         })
     return jsonify(output)
 
-@books_bp.post("/upload")
+@books_bp.route("/upload", methods=["POST"])
 def upload_book():
     title = request.form.get("title")
     file = request.files.get("file")
@@ -36,5 +36,14 @@ def upload_book():
 
 @books_bp.route("/all", methods=["GET"])
 def get_all_books():
-    books = list(mongo.db.books.find({}, {"_id": 0}))
-    return jsonify(books)
+    books = mongo.db.books.find()
+    output = []
+    for b in books:
+        output.append({
+            "_id": str(b["_id"]),
+            "title": b["title"],
+            "file_url": b["file_url"]
+        })
+    return jsonify(output)
+
+

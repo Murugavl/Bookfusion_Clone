@@ -1,20 +1,28 @@
+import uuid
 from supabase import create_client, Client
 from app.config import config
-import uuid
 
-supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
+SUPABASE_URL = config.SUPABASE_URL
+SUPABASE_KEY = config.SUPABASE_KEY
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def upload_file_to_supabase(file):
-    # generate a unique file name
-    file_extension = file.filename.split(".")[-1]
-    unique_name = f"{uuid.uuid4()}.{file_extension}"
-
-    # upload file to "books" bucket
     file_bytes = file.read()
-    res = supabase.storage.from_("books").upload(unique_name, file_bytes)
+    extension = file.filename.split('.')[-1].lower()
 
-    if res.get("error"):
-        raise Exception(res["error"]["message"])
+    file_name = f"{uuid.uuid4()}.{extension}"
 
-    # return public URL
-    return supabase.storage.from_("books").get_public_url(unique_name)
+    mime_type = "application/pdf" if extension == "pdf" else "application/octet-stream"
+
+    supabase.storage.from_("books").upload(
+        file_name,
+        file_bytes,
+        file_options={
+            "content-type": mime_type,
+            "upsert": False
+        }
+    )
+
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/books/{file_name}"
+    return public_url

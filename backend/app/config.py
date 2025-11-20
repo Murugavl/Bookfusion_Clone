@@ -7,5 +7,8 @@ class config:
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
     MONGO_URI = os.getenv("MONGODB_URI")
     SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+    SUPABASE_KEY = os.getenv("SUPABASE_KEY")    
+    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+    SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "books")
+
 
