@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.services.cloudinary_service import upload_file
 from app.models.db import mongo
+from app.services.supabase_service import upload_file_to_supabase
 
 books_bp = Blueprint("books", __name__)
 
@@ -24,7 +24,7 @@ def upload_book():
     if not file:
         return jsonify({"error": "No file provided"}), 400
 
-    file_url = upload_file(file)
+    file_url = upload_file_to_supabase(file)
 
     mongo.db.books.insert_one({
         "title": title,
