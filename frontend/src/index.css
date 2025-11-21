@@ -66,3 +66,17 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+html, body, #root {
+    height: 100%;
+    margin: 0;
+}
+
+.rpv-core__viewer {
+    height: 100% !important;
+}
+
+.rpv-core__inner-pages {
+    display: flex !important;
+    justify-content: center !important;
+}
