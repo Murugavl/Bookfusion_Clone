@@ -4,10 +4,10 @@ export default function Navigation() {
   const location = useLocation();
 
   const navStyle = {
-    background: "var(--bg-primary)",
-    borderBottom: "1px solid var(--border-color)",
+    background: "#1a1a1a",
+    borderBottom: "1px solid #2a2a2a",
     padding: "1rem 0",
-    boxShadow: "var(--shadow-sm)",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
     position: "sticky",
     top: 0,
     zIndex: 100
@@ -38,17 +38,17 @@ export default function Navigation() {
   };
 
   const linkStyle = (isActive) => ({
-    color: isActive ? "var(--primary-color)" : "var(--text-secondary)",
+    color: isActive ? "#6366f1" : "#e0e0e0",
     fontWeight: isActive ? 600 : 500,
     padding: "0.5rem 1rem",
     borderRadius: "0.5rem",
     transition: "all 0.2s ease",
-    backgroundColor: isActive ? "rgba(99, 102, 241, 0.1)" : "transparent"
+    backgroundColor: isActive ? "rgba(99, 102, 241, 0.2)" : "transparent"
   });
 
   const buttonStyle = {
     padding: "0.625rem 1.25rem",
-    backgroundColor: "var(--primary-color)",
+    backgroundColor: "#6366f1",
     color: "white",
     borderRadius: "0.5rem",
     fontWeight: 500,
@@ -61,7 +61,7 @@ export default function Navigation() {
     <nav style={navStyle}>
       <div style={containerStyle}>
         <Link to="/" style={logoStyle}>
-          📚 BookFusion
+          📚 Vel's BookCloud
         </Link>
         <div style={navLinksStyle}>
           <Link 

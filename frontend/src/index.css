@@ -183,11 +183,12 @@ input:disabled, textarea:disabled, select:disabled {
 }
 
 .book-card {
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .book-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-4px) scale(1.02);
   box-shadow: var(--shadow-lg);
 }
 
