@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import Navigation from "../components/Navigation";
 
 export default function BookList() {
   const [books, setBooks] = useState([]);
@@ -24,102 +25,226 @@ export default function BookList() {
       });
   }, []);
 
+  const pageStyle = {
+    minHeight: "100vh",
+    background: "var(--bg-secondary)"
+  };
+
+  const containerStyle = {
+    maxWidth: "1200px",
+    margin: "0 auto",
+    padding: "2rem 1.5rem"
+  };
+
+  const headerStyle = {
+    marginBottom: "2rem"
+  };
+
+  const titleStyle = {
+    fontSize: "2rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    marginBottom: "0.5rem"
+  };
+
+  const subtitleStyle = {
+    color: "var(--text-secondary)",
+    fontSize: "1rem"
+  };
+
+  const loadingStyle = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "60vh",
+    gap: "1rem"
+  };
+
+  const errorStyle = {
+    ...loadingStyle,
+    color: "var(--error-color)"
+  };
+
+  const emptyStateStyle = {
+    textAlign: "center",
+    padding: "4rem 2rem",
+    background: "var(--bg-primary)",
+    borderRadius: "0.75rem",
+    boxShadow: "var(--shadow-md)"
+  };
+
+  const emptyIconStyle = {
+    fontSize: "4rem",
+    marginBottom: "1rem"
+  };
+
+  const emptyTextStyle = {
+    color: "var(--text-secondary)",
+    fontSize: "1.125rem",
+    marginBottom: "1.5rem"
+  };
+
+  const gridStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+    gap: "1.5rem"
+  };
+
+  const cardStyle = {
+    background: "var(--bg-primary)",
+    borderRadius: "0.75rem",
+    padding: "1.5rem",
+    boxShadow: "var(--shadow-md)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+    border: "1px solid var(--border-color)"
+  };
+
+  const bookTitleStyle = {
+    fontSize: "1.125rem",
+    fontWeight: 600,
+    color: "var(--text-primary)",
+    margin: 0,
+    lineHeight: 1.4,
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden"
+  };
+
+  const actionButtonStyle = {
+    padding: "0.625rem 1rem",
+    background: "var(--primary-color)",
+    color: "white",
+    borderRadius: "0.5rem",
+    fontSize: "0.875rem",
+    fontWeight: 500,
+    textAlign: "center",
+    transition: "all 0.2s ease",
+    display: "block"
+  };
+
   if (loading) {
     return (
-      <div style={{ padding: 20 }}>
-        <h2>Your Library</h2>
-        <p>Loading...</p>
+      <div style={pageStyle}>
+        <Navigation />
+        <div style={containerStyle}>
+          <div style={loadingStyle}>
+            <div className="spinner"></div>
+            <p style={{ color: "var(--text-secondary)" }}>Loading your library...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: 20 }}>
-        <h2>Your Library</h2>
-        <p style={{ color: "#d32f2f" }}>{error}</p>
+      <div style={pageStyle}>
+        <Navigation />
+        <div style={containerStyle}>
+          <div style={errorStyle}>
+            <div style={{ fontSize: "3rem" }}>⚠️</div>
+            <h2 style={{ margin: 0 }}>Error</h2>
+            <p>{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: "0.75rem 1.5rem",
+                background: "var(--primary-color)",
+                color: "white",
+                borderRadius: "0.5rem",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 500
+              }}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        marginBottom: 20
-      }}>
-        <h2 style={{ margin: 0 }}>Your Library</h2>
-        <Link 
-          to="/upload" 
-          style={{ 
-            padding: "8px 16px",
-            backgroundColor: "#1976d2",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: 4
-          }}
-        >
-          Upload Book
-        </Link>
+    <div style={pageStyle}>
+      <Navigation />
+      <div style={containerStyle}>
+        <div style={headerStyle}>
+          <h1 style={titleStyle}>Your Library</h1>
+          <p style={subtitleStyle}>
+            {books.length === 0 
+              ? "Start building your digital library" 
+              : `${books.length} ${books.length === 1 ? 'book' : 'books'} in your collection`}
+          </p>
+        </div>
+
+        {books.length === 0 ? (
+          <div style={emptyStateStyle}>
+            <div style={emptyIconStyle}>📚</div>
+            <h2 style={{ color: "var(--text-primary)", marginBottom: "0.5rem" }}>
+              Your library is empty
+            </h2>
+            <p style={emptyTextStyle}>
+              Upload your first book to get started
+            </p>
+            <Link 
+              to="/upload"
+              style={{
+                ...actionButtonStyle,
+                display: "inline-block"
+              }}
+            >
+              Upload Your First Book
+            </Link>
+          </div>
+        ) : (
+          <div style={gridStyle}>
+            {books.map((book) => (
+              <div 
+                key={book._id} 
+                className="book-card"
+                style={cardStyle}
+              >
+                <Link 
+                  to={`/book/${book._id}`} 
+                  style={{ 
+                    textDecoration: "none",
+                    color: "inherit"
+                  }}
+                >
+                  <div style={{
+                    width: "100%",
+                    height: "200px",
+                    background: "linear-gradient(135deg, var(--primary-light), var(--secondary-color))",
+                    borderRadius: "0.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "3rem",
+                    marginBottom: "1rem",
+                    boxShadow: "var(--shadow-sm)"
+                  }}>
+                    📖
+                  </div>
+                  <h3 style={bookTitleStyle}>{book.title}</h3>
+                </Link>
+                <a 
+                  href={book.file_url} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={actionButtonStyle}
+                >
+                  Open PDF
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {books.length === 0 ? (
-        <div style={{
-          padding: 40,
-          textAlign: "center",
-          color: "#666"
-        }}>
-          <p>No books in your library yet.</p>
-          <Link to="/upload" style={{ 
-            color: "#1976d2",
-            textDecoration: "none"
-          }}>
-            Upload your first book
-          </Link>
-        </div>
-      ) : (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: 20
-        }}>
-          {books.map((book) => (
-            <div key={book._id} style={{
-              border: "1px solid #ddd",
-              borderRadius: 10,
-              padding: 15,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10
-            }}>
-              <Link 
-                to={`/book/${book._id}`} 
-                style={{ 
-                  textDecoration: "none",
-                  color: "inherit"
-                }}
-              >
-                <h3 style={{ margin: 0 }}>{book.title}</h3>
-              </Link>
-
-              <a 
-                href={book.file_url} 
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: "#1976d2",
-                  textDecoration: "none",
-                  fontSize: "14px"
-                }}
-              >
-                Open File
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

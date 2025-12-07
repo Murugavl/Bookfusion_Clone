@@ -182,6 +182,15 @@ input:disabled, textarea:disabled, select:disabled {
   transform: translateY(-2px);
 }
 
+.book-card {
+  transition: all 0.2s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 var(--spacing-md);

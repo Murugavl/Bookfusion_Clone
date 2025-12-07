@@ -1,14 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Navigation from "../components/Navigation";
 
 export default function UploadBook() {
   const [title, setTitle] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState
-  (null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const uploadBook = async () => {
@@ -54,7 +54,7 @@ export default function UploadBook() {
       setTitle("");
       setFile(null);
       
-      // Optionally navigate to book list after a delay
+      // Navigate to book list after a delay
       setTimeout(() => {
         navigate("/");
       }, 2000);
@@ -69,71 +69,186 @@ export default function UploadBook() {
     }
   };
 
+  const pageStyle = {
+    minHeight: "100vh",
+    background: "var(--bg-secondary)"
+  };
+
+  const containerStyle = {
+    maxWidth: "600px",
+    margin: "0 auto",
+    padding: "2rem 1.5rem"
+  };
+
+  const cardStyle = {
+    background: "var(--bg-primary)",
+    borderRadius: "0.75rem",
+    padding: "2rem",
+    boxShadow: "var(--shadow-lg)",
+    border: "1px solid var(--border-color)"
+  };
+
+  const titleStyle = {
+    fontSize: "2rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    marginBottom: "0.5rem"
+  };
+
+  const subtitleStyle = {
+    color: "var(--text-secondary)",
+    fontSize: "1rem",
+    marginBottom: "2rem"
+  };
+
+  const formGroupStyle = {
+    marginBottom: "1.5rem"
+  };
+
+  const labelStyle = {
+    display: "block",
+    marginBottom: "0.5rem",
+    fontWeight: 500,
+    color: "var(--text-primary)",
+    fontSize: "0.875rem"
+  };
+
+  const inputStyle = {
+    width: "100%",
+    padding: "0.75rem 1rem",
+    fontSize: "1rem",
+    border: "1px solid var(--border-color)",
+    borderRadius: "0.5rem",
+    background: "var(--bg-primary)",
+    color: "var(--text-primary)",
+    transition: "all 0.2s ease"
+  };
+
+  const fileInputWrapperStyle = {
+    border: "2px dashed var(--border-color)",
+    borderRadius: "0.5rem",
+    padding: "2rem",
+    textAlign: "center",
+    background: "var(--bg-secondary)",
+    transition: "all 0.2s ease",
+    cursor: "pointer"
+  };
+
+  const fileInputStyle = {
+    ...inputStyle,
+    border: "none",
+    background: "transparent",
+    cursor: "pointer"
+  };
+
+  const buttonStyle = {
+    width: "100%",
+    padding: "0.875rem 1.5rem",
+    fontSize: "1rem",
+    fontWeight: 600,
+    background: loading ? "var(--text-tertiary)" : "var(--primary-color)",
+    color: "white",
+    border: "none",
+    borderRadius: "0.5rem",
+    cursor: loading ? "not-allowed" : "pointer",
+    transition: "all 0.2s ease",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.5rem"
+  };
+
+  const errorStyle = {
+    padding: "0.875rem 1rem",
+    background: "rgba(239, 68, 68, 0.1)",
+    color: "var(--error-color)",
+    borderRadius: "0.5rem",
+    marginTop: "1rem",
+    border: "1px solid rgba(239, 68, 68, 0.2)"
+  };
+
+  const successStyle = {
+    padding: "0.875rem 1rem",
+    background: "rgba(16, 185, 129, 0.1)",
+    color: "var(--success-color)",
+    borderRadius: "0.5rem",
+    marginTop: "1rem",
+    border: "1px solid rgba(16, 185, 129, 0.2)"
+  };
+
   return (
-    <div style={{ padding: 20, maxWidth: 500 }}>
-      <h2>Upload Book</h2>
-      
-      <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
-        <div>
-          <label style={{ display: "block", marginBottom: 5 }}>
-            Book Title
-          </label>
-          <input
-            type="text"
-            placeholder="Enter book title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+    <div style={pageStyle}>
+      <Navigation />
+      <div style={containerStyle}>
+        <div style={cardStyle}>
+          <h1 style={titleStyle}>Upload Book</h1>
+          <p style={subtitleStyle}>
+            Add a new PDF book to your library
+          </p>
+          
+          <div style={formGroupStyle}>
+            <label style={labelStyle}>Book Title *</label>
+            <input
+              type="text"
+              placeholder="Enter book title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={loading}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={formGroupStyle}>
+            <label style={labelStyle}>PDF File *</label>
+            <div style={fileInputWrapperStyle}>
+              <input 
+                type="file" 
+                accept=".pdf,application/pdf"
+                onChange={(e) => setFile(e.target.files[0])}
+                disabled={loading}
+                style={fileInputStyle}
+              />
+              {file && (
+                <p style={{ 
+                  marginTop: "0.5rem", 
+                  color: "var(--text-secondary)",
+                  fontSize: "0.875rem"
+                }}>
+                  Selected: {file.name}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <button 
+            onClick={uploadBook}
             disabled={loading}
-            style={{
-              width: "100%",
-              padding: "8px",
-              fontSize: "16px",
-              border: "1px solid #ddd",
-              borderRadius: 4
-            }}
-          />
+            style={buttonStyle}
+          >
+            {loading ? (
+              <>
+                <div className="spinner" style={{ width: "20px", height: "20px", borderWidth: "2px" }}></div>
+                Uploading...
+              </>
+            ) : (
+              <>
+                📤 Upload Book
+              </>
+            )}
+          </button>
+
+          {error && (
+            <div style={errorStyle}>
+              ⚠️ {error}
+            </div>
+          )}
+
+          {message && (
+            <div style={successStyle}>
+              ✅ {message}
+            </div>
+          )}
         </div>
-
-        <div>
-          <label style={{ display: "block", marginBottom: 5 }}>
-            PDF File
-          </label>
-          <input 
-            type="file" 
-            accept=".pdf,application/pdf"
-            onChange={(e) => setFile(e.target.files[0])}
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "8px",
-              fontSize: "16px"
-            }}
-          />
-        </div>
-
-        <button 
-          onClick={uploadBook}
-          disabled={loading}
-          style={{
-            padding: "10px 20px",
-            fontSize: "16px",
-            backgroundColor: loading ? "#ccc" : "#1976d2",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
-            cursor: loading ? "not-allowed" : "pointer"
-          }}
-        >
-          {loading ? "Uploading..." : "Upload"}
-        </button>
-
-        {error && (
-          <p style={{ color: "#d32f2f", margin: 0 }}>{error}</p>
-        )}
-
-        {message && (
-          <p style={{ color: "#2e7d32", margin: 0 }}>{message}</p>
-        )}
       </div>
     </div>
   );
