@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import axios from "axios";
+import { bookService } from "../services/api";
 
 import { Worker, Viewer } from "@react-pdf-viewer/core";
 import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
@@ -19,25 +19,26 @@ export default function PDFReader() {
   const layoutPlugin = useMemo(() => defaultLayoutPlugin(), []);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    
-    axios.get("http://127.0.0.1:5000/api/books/all")
-      .then(res => {
-        const found = res.data.find(b => b._id === id);
-        if (found) {
-          setBook(found);
-        } else {
-          setError("Book not found");
-        }
-      })
-      .catch(err => {
+    const fetchBook = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await bookService.getById(id);
+        setBook(response.data);
+      } catch (err) {
         console.error(err);
-        setError("Failed to load book. Please try again later.");
-      })
-      .finally(() => {
+        if (err.response?.status === 404) {
+          setError("Book not found");
+        } else {
+          setError("Failed to load book. Please try again later.");
+        }
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    
+    fetchBook();
   }, [id]);
 
   const loadingStyle = {

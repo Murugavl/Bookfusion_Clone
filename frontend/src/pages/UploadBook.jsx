@@ -1,7 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
+import { bookService } from "../services/api";
 
 export default function UploadBook() {
   const [title, setTitle] = useState("");
@@ -38,15 +38,7 @@ export default function UploadBook() {
       form.append("title", title.trim());
       form.append("file", file);
 
-      const res = await axios.post(
-        "http://127.0.0.1:5000/api/books/upload",
-        form,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        }
-      );
+      const res = await bookService.upload(form);
 
       setMessage(res.data.message || "Book uploaded successfully!");
       

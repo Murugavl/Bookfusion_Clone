@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+import os
 from .config import config
 from .models.db import mongo
 
@@ -13,12 +14,14 @@ def create_app():
     
     app = Flask(__name__)
     
-    # Configure CORS - allow all origins for development
-    # In production, specify allowed origins
+    # Configure CORS
+    # In production, set ALLOWED_ORIGINS environment variable
+    allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+    
     CORS(app, supports_credentials=True, resources={
         r"/api/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "origins": allowed_origins,
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }
     })

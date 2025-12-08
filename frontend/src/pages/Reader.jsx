@@ -1,8 +1,8 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import axios from "axios";
 import { setBookProgress, getBookNotes, addBookNote, getBookHighlights, addBookHighlight } from "../utils/bookStorage";
+import { bookService } from "../services/api";
 
 // Set worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
@@ -77,18 +77,34 @@ export default function Reader() {
     loadPdf();
   }, [pdfUrl]);
 
+  // Throttle progress saving to avoid too many API calls
+  const saveProgressRef = useRef(null);
+  
   // Save progress when page changes
   useEffect(() => {
     if (bookId && currentPage > 0 && totalPages > 0) {
-      // Save to localStorage
+      // Save to localStorage immediately
       setBookProgress(bookId, currentPage, totalPages);
       
-      // Save to backend
-      axios.post(`http://127.0.0.1:5000/api/books/${bookId}/progress`, {
-        current_page: currentPage,
-        total_pages: totalPages
-      }).catch(err => console.error("Failed to save progress:", err));
+      // Clear existing timeout
+      if (saveProgressRef.current) {
+        clearTimeout(saveProgressRef.current);
+      }
+      
+      // Throttle backend save (save after 2 seconds of no page changes)
+      saveProgressRef.current = setTimeout(() => {
+        bookService.updateProgress(bookId, {
+          current_page: currentPage,
+          total_pages: totalPages
+        }).catch(err => console.error("Failed to save progress:", err));
+      }, 2000);
     }
+    
+    return () => {
+      if (saveProgressRef.current) {
+        clearTimeout(saveProgressRef.current);
+      }
+    };
   }, [bookId, currentPage, totalPages]);
 
   useEffect(() => {

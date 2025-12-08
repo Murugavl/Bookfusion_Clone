@@ -1,39 +1,19 @@
-import { useEffect, useState, useMemo } from "react";
-import axios from "axios";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getBookStatus, setBookStatus, getBookProgress } from "../utils/bookStorage";
+import { getBookStatus, setBookStatus } from "../utils/bookStorage";
+import { useBooks } from "../hooks/useBooks";
+import { useDebounce } from "../hooks/useDebounce";
+import { bookService } from "../services/api";
 
 export default function BookList() {
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { books, loading, error, setBooks } = useBooks();
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSidebarItem, setActiveSidebarItem] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    
-    axios.get("http://127.0.0.1:5000/api/books/all")
-      .then(res => {
-        // Enhance books with local storage data
-        const enhancedBooks = res.data.map(book => ({
-          ...book,
-          status: book.status || getBookStatus(book._id),
-          progress: getBookProgress(book._id)
-        }));
-        setBooks(enhancedBooks);
-      })
-      .catch(err => {
-        console.error(err);
-        setError("Failed to load books. Please try again later.");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  
+  // Debounce search query for better performance
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const handleStatusChange = async (bookId, newStatus) => {
     // Update local storage
@@ -41,9 +21,7 @@ export default function BookList() {
     
     // Update backend
     try {
-      await axios.patch(`http://127.0.0.1:5000/api/books/${bookId}`, {
-        status: newStatus
-      });
+      await bookService.update(bookId, { status: newStatus });
       
       // Update local state
       setBooks(books.map(book => 
@@ -51,6 +29,8 @@ export default function BookList() {
       ));
     } catch (err) {
       console.error("Failed to update book status:", err);
+      // Revert local storage change on error
+      setBookStatus(bookId, books.find(b => b._id === bookId)?.status || "All");
     }
   };
 
@@ -64,11 +44,11 @@ export default function BookList() {
   const filteredBooks = useMemo(() => {
     let filtered = [...books];
 
-    // Apply search filter
-    if (searchQuery.trim()) {
+    // Apply search filter (using debounced query)
+    if (debouncedSearchQuery.trim()) {
       filtered = filtered.filter(book =>
-        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (book.author && book.author.toLowerCase().includes(searchQuery.toLowerCase()))
+        book.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        (book.author && book.author.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
       );
     }
 
@@ -81,7 +61,7 @@ export default function BookList() {
     }
 
     return filtered;
-  }, [books, activeTab, searchQuery]);
+  }, [books, activeTab, debouncedSearchQuery]);
 
   const pageStyle = {
     minHeight: "100vh",

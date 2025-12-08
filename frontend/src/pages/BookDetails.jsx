@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { bookService } from "../services/api";
 import PDFReader from "./PDFReader";
 import Navigation from "../components/Navigation";
 
@@ -12,25 +12,26 @@ export default function BookDetails() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    
-    axios.get("http://127.0.0.1:5000/api/books/all")
-      .then(res => {
-        const found = res.data.find(b => b._id === id);
-        if (found) {
-          setBook(found);
-        } else {
-          setError("Book not found");
-        }
-      })
-      .catch(err => {
+    const fetchBook = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await bookService.getById(id);
+        setBook(response.data);
+      } catch (err) {
         console.error(err);
-        setError("Failed to load book. Please try again later.");
-      })
-      .finally(() => {
+        if (err.response?.status === 404) {
+          setError("Book not found");
+        } else {
+          setError("Failed to load book. Please try again later.");
+        }
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    
+    fetchBook();
   }, [id]);
 
   const pageStyle = {
