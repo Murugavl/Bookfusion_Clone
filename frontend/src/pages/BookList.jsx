@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Navigation from "../components/Navigation";
+import { getBookStatus, setBookStatus, getBookProgress } from "../utils/bookStorage";
 
 export default function BookList() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSidebarItem, setActiveSidebarItem] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,7 +18,13 @@ export default function BookList() {
     
     axios.get("http://127.0.0.1:5000/api/books/all")
       .then(res => {
-        setBooks(res.data);
+        // Enhance books with local storage data
+        const enhancedBooks = res.data.map(book => ({
+          ...book,
+          status: book.status || getBookStatus(book._id),
+          progress: getBookProgress(book._id)
+        }));
+        setBooks(enhancedBooks);
       })
       .catch(err => {
         console.error(err);
@@ -27,30 +35,76 @@ export default function BookList() {
       });
   }, []);
 
+  const handleStatusChange = async (bookId, newStatus) => {
+    // Update local storage
+    setBookStatus(bookId, newStatus);
+    
+    // Update backend
+    try {
+      await axios.patch(`http://127.0.0.1:5000/api/books/${bookId}`, {
+        status: newStatus
+      });
+      
+      // Update local state
+      setBooks(books.map(book => 
+        book._id === bookId ? { ...book, status: newStatus } : book
+      ));
+    } catch (err) {
+      console.error("Failed to update book status:", err);
+    }
+  };
+
   const handleBookClick = (book) => {
     const pdfUrl = encodeURIComponent(book.file_url);
     const title = encodeURIComponent(book.title);
     navigate(`/reader/${book._id}?pdfUrl=${pdfUrl}&title=${title}`);
   };
 
+  // Filter books based on active tab and search query
+  const filteredBooks = useMemo(() => {
+    let filtered = [...books];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(book =>
+        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (book.author && book.author.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+
+    // Apply tab filter
+    if (activeTab !== "All") {
+      filtered = filtered.filter(book => {
+        const bookStatus = book.status || getBookStatus(book._id);
+        return bookStatus === activeTab;
+      });
+    }
+
+    return filtered;
+  }, [books, activeTab, searchQuery]);
+
   const pageStyle = {
     minHeight: "100vh",
-    background: "#131313",
-    color: "#ffffff",
-    display: "flex"
+    background: "#0D0D0D",
+    color: "#FFFFFF",
+    position: "relative"
   };
 
   const sidebarStyle = {
-    width: "250px",
-    background: "#1a1a1a",
-    padding: "2rem 1.5rem",
-    borderRight: "1px solid #2a2a2a",
-    minHeight: "100vh"
+    width: "260px",
+    background: "#111111",
+    position: "fixed",
+    left: 0,
+    top: 0,
+    height: "100vh",
+    padding: "24px",
+    overflowY: "auto",
+    zIndex: 10
   };
 
   const sidebarItemStyle = {
     padding: "0.75rem 1rem",
-    marginBottom: "0.5rem",
+    marginBottom: "18px",
     borderRadius: "0.5rem",
     cursor: "pointer",
     transition: "all 0.2s ease",
@@ -59,34 +113,40 @@ export default function BookList() {
   };
 
   const mainContentStyle = {
-    flex: 1,
-    padding: "2rem 3rem",
-    overflow: "auto"
+    marginLeft: "260px",
+    maxWidth: "1200px",
+    padding: "32px",
+    minHeight: "100vh"
   };
 
   const headerStyle = {
-    marginBottom: "2rem"
+    marginBottom: "24px"
   };
 
   const titleStyle = {
-    fontSize: "2.5rem",
+    fontSize: "32px",
     fontWeight: 700,
-    color: "#ffffff",
-    marginBottom: "1rem"
+    color: "#FFFFFF",
+    marginBottom: "8px",
+    lineHeight: "1.2"
+  };
+
+  const bookCountStyle = {
+    fontSize: "0.875rem",
+    color: "#a0a0a0",
+    marginBottom: "24px"
   };
 
   const tabsStyle = {
     display: "flex",
-    gap: "1rem",
-    marginBottom: "2rem",
-    borderBottom: "1px solid #2a2a2a",
-    paddingBottom: "1rem"
+    gap: "24px",
+    marginBottom: "24px"
   };
 
   const tabStyle = (isActive) => ({
     padding: "0.75rem 1.5rem",
-    background: isActive ? "#6366f1" : "transparent",
-    color: isActive ? "#ffffff" : "#a0a0a0",
+    background: isActive ? "#6366f1" : "#1a1a1a",
+    color: isActive ? "#FFFFFF" : "#a0a0a0",
     border: "none",
     borderRadius: "0.5rem",
     cursor: "pointer",
@@ -98,40 +158,86 @@ export default function BookList() {
   const gridStyle = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-    gap: "1.5rem"
+    gap: "24px"
+  };
+
+  const searchInputStyle = {
+    width: "400px",
+    padding: "0.75rem 1rem",
+    background: "#1E1E1E",
+    border: "1px solid #2a2a2a",
+    borderRadius: "0.5rem",
+    color: "#FFFFFF",
+    fontSize: "0.95rem",
+    marginBottom: "24px",
+    outline: "none",
+    transition: "all 0.2s ease"
   };
 
   const cardStyle = {
-    background: "#1a1a1a",
-    borderRadius: "0.75rem",
+    width: "180px",
+    background: "transparent",
+    borderRadius: "12px",
     overflow: "hidden",
     cursor: "pointer",
     transition: "all 0.3s ease",
-    border: "1px solid #2a2a2a"
+    margin: "0"
   };
 
-  const coverStyle = {
-    width: "100%",
-    height: "260px",
-    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "4rem",
-    position: "relative",
-    overflow: "hidden"
+  // Generate gradient based on book title for variety
+  const getCoverStyle = (book) => {
+    // If cover_url exists, use it
+    if (book.cover_url) {
+      return {
+        width: "100%",
+        height: "240px",
+        backgroundImage: `url(${book.cover_url})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "4rem",
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: "12px 12px 0 0"
+      };
+    }
+    
+    // Otherwise use gradient
+    const gradients = [
+      "linear-gradient(135deg, #6366f1, #8b5cf6)",
+      "linear-gradient(135deg, #8b5cf6, #ec4899)",
+      "linear-gradient(135deg, #ec4899, #f59e0b)",
+      "linear-gradient(135deg, #f59e0b, #10b981)",
+      "linear-gradient(135deg, #10b981, #06b6d4)",
+      "linear-gradient(135deg, #06b6d4, #6366f1)"
+    ];
+    const index = book.title.length % gradients.length;
+    return {
+      width: "100%",
+      height: "240px",
+      background: gradients[index],
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "4rem",
+      position: "relative",
+      overflow: "hidden",
+      borderRadius: "12px 12px 0 0"
+    };
   };
 
   const cardInfoStyle = {
-    padding: "1rem",
-    background: "#1a1a1a"
+    padding: "12px 0 0 0",
+    background: "transparent"
   };
 
   const bookTitleStyle = {
     fontSize: "0.95rem",
-    fontWeight: 600,
-    color: "#ffffff",
-    margin: "0 0 0.5rem 0",
+    fontWeight: 700,
+    color: "#FFFFFF",
+    margin: "0 0 4px 0",
     lineHeight: 1.4,
     display: "-webkit-box",
     WebkitLineClamp: 2,
@@ -142,7 +248,7 @@ export default function BookList() {
   const authorStyle = {
     fontSize: "0.85rem",
     color: "#a0a0a0",
-    margin: 0
+    margin: "0 0 8px 0"
   };
 
   const loadingStyle = {
@@ -163,7 +269,16 @@ export default function BookList() {
   if (loading) {
     return (
       <div style={pageStyle}>
-        <Navigation />
+        <div style={sidebarStyle}>
+          <h3 style={{ 
+            color: "#FFFFFF", 
+            fontSize: "1.125rem", 
+            marginBottom: "24px",
+            fontWeight: 700
+          }}>
+            Library
+          </h3>
+        </div>
         <div style={mainContentStyle}>
           <div style={loadingStyle}>
             <div className="spinner" style={{ borderTopColor: "#6366f1" }}></div>
@@ -177,7 +292,16 @@ export default function BookList() {
   if (error) {
     return (
       <div style={pageStyle}>
-        <Navigation />
+        <div style={sidebarStyle}>
+          <h3 style={{ 
+            color: "#FFFFFF", 
+            fontSize: "1.125rem", 
+            marginBottom: "24px",
+            fontWeight: 700
+          }}>
+            Library
+          </h3>
+        </div>
         <div style={mainContentStyle}>
           <div style={loadingStyle}>
             <div style={{ fontSize: "3rem" }}>⚠️</div>
@@ -205,32 +329,46 @@ export default function BookList() {
 
   return (
     <div style={pageStyle}>
-      <Navigation />
-      
       {/* Sidebar */}
       <div style={sidebarStyle}>
         <h3 style={{ 
-          color: "#ffffff", 
+          color: "#FFFFFF", 
           fontSize: "1.125rem", 
-          marginBottom: "1.5rem",
-          fontWeight: 600
+          marginBottom: "24px",
+          fontWeight: 700
         }}>
           Library
         </h3>
-        {["📊 Reading Time", "📚 All Content", "📖 Series", "⭐ Highlights", "💬 Reviews", "📱 Send to Kindle"].map((item, index) => (
+        {[
+          { icon: "📊", label: "Reading Time", action: () => setActiveSidebarItem("reading-time") },
+          { icon: "📚", label: "All Content", action: () => setActiveSidebarItem("all-content") },
+          { icon: "📖", label: "Series", action: () => setActiveSidebarItem("series") },
+          { icon: "⭐", label: "Highlights", action: () => setActiveSidebarItem("highlights") },
+          { icon: "💬", label: "Reviews", action: () => setActiveSidebarItem("reviews") },
+          { icon: "📱", label: "Send to Kindle", action: () => setActiveSidebarItem("kindle") }
+        ].map((item, index) => (
           <div
             key={index}
-            style={sidebarItemStyle}
+            style={{
+              ...sidebarItemStyle,
+              background: activeSidebarItem === item.label.toLowerCase().replace(/\s+/g, '-') ? "#2a2a2a" : "transparent",
+              color: activeSidebarItem === item.label.toLowerCase().replace(/\s+/g, '-') ? "#ffffff" : "#e0e0e0"
+            }}
+            onClick={item.action}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#2a2a2a";
-              e.currentTarget.style.color = "#ffffff";
+              if (activeSidebarItem !== item.label.toLowerCase().replace(/\s+/g, '-')) {
+                e.currentTarget.style.background = "#2a2a2a";
+                e.currentTarget.style.color = "#ffffff";
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "#e0e0e0";
+              if (activeSidebarItem !== item.label.toLowerCase().replace(/\s+/g, '-')) {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "#e0e0e0";
+              }
             }}
           >
-            {item}
+            {item.icon} {item.label}
           </div>
         ))}
       </div>
@@ -239,7 +377,28 @@ export default function BookList() {
       <div style={mainContentStyle}>
         <div style={headerStyle}>
           <h1 style={titleStyle}>My Shelf</h1>
+          <p style={bookCountStyle}>
+            {filteredBooks.length} {filteredBooks.length === 1 ? 'book' : 'books'}
+            {searchQuery && ` • Searching: "${searchQuery}"`}
+          </p>
         </div>
+
+        {/* Search Bar */}
+        <input
+          type="text"
+          placeholder="Search books..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={searchInputStyle}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "#6366f1";
+            e.currentTarget.style.background = "#2a2a2a";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#2a2a2a";
+            e.currentTarget.style.background = "#1E1E1E";
+          }}
+        />
 
         {/* Tabs */}
         <div style={tabsStyle}>
@@ -280,29 +439,58 @@ export default function BookList() {
               Upload your first book to get started
             </p>
           </div>
+        ) : filteredBooks.length === 0 ? (
+          <div style={emptyStateStyle}>
+            <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>🔍</div>
+            <h2 style={{ color: "#ffffff", marginBottom: "0.5rem" }}>
+              No books found
+            </h2>
+            <p>
+              {searchQuery 
+                ? `No books match "${searchQuery}"`
+                : `No books in "${activeTab}" category`}
+            </p>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                style={{
+                  marginTop: "1rem",
+                  padding: "0.75rem 1.5rem",
+                  background: "#6366f1",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "0.5rem",
+                  cursor: "pointer",
+                  fontWeight: 500
+                }}
+              >
+                Clear Search
+              </button>
+            )}
+          </div>
         ) : (
           <div style={gridStyle}>
-            {books.map((book) => (
+            {filteredBooks.map((book) => (
               <div
                 key={book._id}
                 className="book-card"
                 style={cardStyle}
                 onClick={() => handleBookClick(book)}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scale(1.05)";
-                  e.currentTarget.style.boxShadow = "0 8px 16px rgba(0,0,0,0.4)";
+                  e.currentTarget.style.transform = "translateY(-4px)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
-                <div style={coverStyle}>
-                  📖
+                <div style={getCoverStyle(book)}>
+                  {!book.cover_url && "📖"}
                 </div>
                 <div style={cardInfoStyle}>
                   <h3 style={bookTitleStyle}>{book.title}</h3>
-                  <p style={authorStyle}>Author Name</p>
+                  <p style={authorStyle}>
+                    {book.author || "Unknown Author"}
+                  </p>
                 </div>
               </div>
             ))}

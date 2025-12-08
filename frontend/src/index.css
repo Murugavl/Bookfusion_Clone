@@ -52,8 +52,8 @@ html, body, #root {
 }
 
 body {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
+  background-color: #0D0D0D;
+  color: #FFFFFF;
   min-width: 320px;
 }
 
