@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";   // ⭐ ADDED useEffect + useRef
 import { useNavigate } from "react-router-dom";
 import { getBookStatus, setBookStatus } from "../utils/bookStorage";
 import { useBooks } from "../hooks/useBooks";
 import { useDebounce } from "../hooks/useDebounce";
 import { bookService } from "../services/api";
+import BookCardMenu from "../components/BookCardMenu";           // ⭐ ADDED
 
 export default function BookList() {
   const { books, loading, error, setBooks } = useBooks();
@@ -12,8 +13,51 @@ export default function BookList() {
   const [activeSidebarItem, setActiveSidebarItem] = useState(null);
   const navigate = useNavigate();
   
-  // Debounce search query for better performance
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // ⭐ ADDED → MENU STATE
+  const [menuOpenId, setMenuOpenId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const menuRef = useRef(null);
+
+  // ⭐ ADDED → CLOSE MENU ON OUTSIDE CLICK
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpenId(null);
+      }
+    };
+    window.addEventListener("mousedown", handler);
+    return () => window.removeEventListener("mousedown", handler);
+  }, []);
+
+  // ⭐ ADDED → OPEN MENU FUNCTION
+  const openMenu = (event, bookId) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setMenuPosition({
+      top: rect.top + window.scrollY + 30,
+      left: rect.left + window.scrollX - 180,
+    });
+    setMenuOpenId(bookId);
+  };
+
+  // ⭐ ADDED → MENU ACTION HANDLER
+  const handleMenuAction = async (action, book) => {
+    if (action === "favorite") {
+      await handleStatusChange(book._id, "Favorites");
+    } else if (action === "remove-current" || action === "remove-plan") {
+      await handleStatusChange(book._id, "All");
+    } else if (action === "completed") {
+      await handleStatusChange(book._id, "Completed");
+    } else if (action === "edit") {
+      navigate("/upload");
+    } else if (action === "delete") {
+      await bookService.delete(book._id);
+      setBooks((prev) => prev.filter((b) => b._id !== book._id));
+    }
+    setMenuOpenId(null);
+  };
 
   const handleStatusChange = async (bookId, newStatus) => {
     // Update local storage
@@ -450,31 +494,62 @@ export default function BookList() {
           </div>
         ) : (
           <div style={gridStyle}>
-            {filteredBooks.map((book) => (
+          {filteredBooks.map((book) => (
+            <div
+              key={book._id}
+              className="book-card"
+              style={cardStyle}
+              onClick={() => handleBookClick(book)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+
+              {/* ⭐ MENU BUTTON (correctly placed) */}
               <div
-                key={book._id}
-                className="book-card"
-                style={cardStyle}
-                onClick={() => handleBookClick(book)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
+                onClick={(e) => openMenu(e, book._id)}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: 8,
+                  background: "rgba(255,255,255,0.1)",
+                  padding: "6px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  zIndex: 1000
                 }}
               >
-                <div style={getCoverStyle(book)}>
-                  {!book.cover_url && "📖"}
-                </div>
-                <div style={cardInfoStyle}>
-                  <h3 style={bookTitleStyle}>{book.title}</h3>
-                  <p style={authorStyle}>
-                    {book.author || "Unknown Author"}
-                  </p>
-                </div>
+                ⋮
               </div>
-            ))}
-          </div>
+
+              {/* ⭐ BOOK COVER */}
+              <div style={getCoverStyle(book)}>
+                {!book.cover_url && "📖"}
+              </div>
+
+              {/* ⭐ TITLE + AUTHOR */}
+              <div style={cardInfoStyle}>
+                <h3 style={bookTitleStyle}>{book.title}</h3>
+                <p style={authorStyle}>{book.author || "Unknown Author"}</p>
+              </div>
+
+              {/* ⭐ CONTEXT MENU */}
+              {menuOpenId === book._id && (
+                <div ref={menuRef}>
+                  <BookCardMenu
+                    visible={true}
+                    position={menuPosition}
+                    onAction={(action) => handleMenuAction(action, book)}
+                  />
+                </div>
+              )}
+
+            </div>
+          ))}
+        </div>
         )}
       </div>
     </div>
